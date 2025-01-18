@@ -1,0 +1,120 @@
+version: '3.8'
+services:
+
+  gateway:
+    build:
+      context: ./games-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_GRPC_CLIENT_DOMAIN_SERVICE_ADDRESS=static://domain:9091
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      - redis
+      - rabbitmq
+      - domain
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  domain:
+    build:
+      context: ./games-service
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_MONGODB_USERNAME=root
+      - SPRING_DATA_MONGODB_PASSWORD=example
+    depends_on:
+      - mongo
+      - rabbitmq
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_VHOST=/
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+#  elasticsearch:
+#    image: elastic/elasticsearch:7.17.10
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false # Убирает требование авторизации
+#    ports:
+#      - "9200:9200"
+#    networks:
+#      - app-network
+#
+#  logstash:
+#    image: elastic/logstash:7.17.0
+#    volumes:
+#      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+#    ports:
+#      - "5044:5044"
+#    depends_on:
+#      - elasticsearch
+#    networks:
+#      - app-network
+#
+#  kibana:
+#    image: elastic/kibana:7.17.0
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      - elasticsearch
+#    networks:
+#      - app-network
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+volumes:
+  mongo_data:
+
+networks:
+  app-network:

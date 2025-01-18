@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: games-route
+          uri: http://games-service:8081/games
+          predicates:
+            - Path=/games/**
+          filters:
+            - name: RedisCacheFilter
+
+  # ----------- REDIS -----------
+  data:
+    redis:
+      host: redis # Имя сервиса Redis в docker-compose.yml
+      port: 6379
+      password: password
+
+  # ----------- RABBITMQ -----------
+  rabbitmq:
+    host: rabbitmq # Имя сервиса RabbitMQ в docker-compose.yml
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+grpc:
+  client:
+    domain-service:
+      address: "static://domain:9091" # Имя сервиса Domain в docker-compose.yml
+      negotiationType: plaintext
+
+app:
+  rabbit:
+    exchange: gamesExchange
+    create-queue: createGameQueue
+    update-queue: updateGameQueue
+    delete-queue: deleteGameQueue
+    create-routing-key: game.create.key
+    update-routing-key: game.update.key
+    delete-routing-key: game.delete.key
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    root: INFO

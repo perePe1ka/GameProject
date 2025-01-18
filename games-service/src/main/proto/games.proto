@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.example.gameproto";
+option java_outer_classname = "GameProto";
+
+service GameService {
+  rpc GetGameById(GetGameRequest) returns (GameResponse);
+
+  rpc GetAllGames(EmptyRequest) returns (GameListResponse);
+}
+
+message GetGameRequest {
+  string id = 1;
+}
+
+message EmptyRequest {
+
+}
+
+message GameListResponse {
+  repeated GameResponse games = 1;
+}
+
+message GameResponse {
+  string id = 1;
+  string name = 2;
+  string genre = 3;
+  string platform = 4;
+}

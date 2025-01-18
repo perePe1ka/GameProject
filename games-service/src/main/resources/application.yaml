@@ -1,0 +1,41 @@
+server:
+  port: 8081
+
+grpc:
+  server:
+    port: 9091
+
+spring:
+  data:
+    mongodb:
+      host: mongo # Имя сервиса MongoDB в docker-compose.yml
+      port: 27017
+      username: root
+      password: example
+      authentication-database: admin
+
+  rabbitmq:
+    host: rabbitmq # Имя RabbitMQ в docker-compose.yml
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+logging:
+  level:
+    root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
