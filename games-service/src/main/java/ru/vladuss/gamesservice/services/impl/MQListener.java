@@ -17,7 +17,7 @@ public class MQListener {
         this.gameService = gameService;
     }
 
-    @RabbitListener(queues = "createGame")
+    @RabbitListener(queues = "createGameQueue")
     private void createGame(GameDto gameDto) {
         Game game = new Game(
                 null,
@@ -28,10 +28,11 @@ public class MQListener {
         gameService.createGame(game);
     }
 
-    @RabbitListener(queues = "updateGame")
-    public void updateGame(GameDto gameDto) throws ChangeSetPersister.NotFoundException {
-        if (gameDto.getId() != null || !gameDto.getId().isEmpty()) {
-            throw new ChangeSetPersister.NotFoundException();
+    @RabbitListener(queues = "updateGameQueue")
+    public void updateGame(GameDto gameDto){
+
+        if (gameDto.getId() == null || gameDto.getId().isEmpty()) {
+            throw new IllegalArgumentException("Game ID cannot be null or empty");
         }
 
         Game game = new Game(
@@ -43,7 +44,7 @@ public class MQListener {
         gameService.updateGame(game);
     }
 
-    @RabbitListener(queues = "deleteGame")
+    @RabbitListener(queues = "deleteGameQueue")
     public void deleteGame(String id) {
         if (id != null && !id.isEmpty()) {
             gameService.deleteGame(id);

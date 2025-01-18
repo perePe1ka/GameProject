@@ -1,6 +1,7 @@
 package ru.vladuss.gamesgateway.dtos;
 
 public class GameDto {
+
     private String id;
     private String name;
     private String genre;
