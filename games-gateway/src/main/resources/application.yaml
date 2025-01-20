@@ -18,6 +18,10 @@ spring:
       host: redis # Имя сервиса Redis в docker-compose.yml
       port: 6379
       password: password
+      lettuce:
+        pool:
+          max-wait: 1002ms
+      timeout: 500ms
 
   # ----------- RABBITMQ -----------
   rabbitmq:

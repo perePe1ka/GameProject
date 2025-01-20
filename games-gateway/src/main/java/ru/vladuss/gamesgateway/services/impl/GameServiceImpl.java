@@ -1,9 +1,12 @@
 package ru.vladuss.gamesgateway.services.impl;
 
+import io.lettuce.core.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 import ru.vladuss.gamesgateway.dtos.GameDto;
 import ru.vladuss.gamesgateway.services.GameService;
@@ -14,13 +17,18 @@ import java.util.List;
 @EnableCaching
 public class GameServiceImpl implements GameService {
 
+    @Autowired
+    RedisConnectionFactory redisConnectionFactory;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GameServiceImpl.class);
 
     private final GameGrpcServiceImpl gameServiceGrpc;
     private final GameProducerImpl gameProducer;
     private final CacheManager cacheManager;
 
-    public GameServiceImpl(GameGrpcServiceImpl gameServiceGrpc, GameProducerImpl gameProducer, CacheManager cacheManager) {
+    public GameServiceImpl(GameGrpcServiceImpl gameServiceGrpc,
+                           GameProducerImpl gameProducer,
+                           CacheManager cacheManager) {
         this.gameServiceGrpc = gameServiceGrpc;
         this.gameProducer = gameProducer;
         this.cacheManager = cacheManager;
@@ -28,10 +36,18 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<GameDto> getAll() {
+        if (!isRedisAvailable()) {
+            LOGGER.warn("Redis is not available. Fetching all games directly from gRPC.");
+            return gameServiceGrpc.getAll();
+        }
+
         var cache = cacheManager.getCache("gamesCache");
-        if (cache != null && cache.get("all") != null) {
-            LOGGER.info("Fetching all games from cache");
-            return (List<GameDto>) cache.get("all").get();
+        if (cache != null) {
+            var cachedValue = cache.get("all");
+            if (cachedValue != null) {
+                LOGGER.info("Fetching all games from cache");
+                return (List<GameDto>) cachedValue.get();
+            }
         }
         LOGGER.info("Fetching all games from gRPC service");
         List<GameDto> games = gameServiceGrpc.getAll();
@@ -43,10 +59,18 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameDto getById(String id) {
+        if (!isRedisAvailable()) {
+            LOGGER.warn("Redis is not available. Fetching game with id = {} directly from gRPC.", id);
+            return gameServiceGrpc.getGameById(id);
+        }
+
         var cache = cacheManager.getCache("gameCache");
-        if (cache != null && cache.get(id) != null) {
-            LOGGER.info("Fetching game with id = {} from cache", id);
-            return (GameDto) cache.get(id).get();
+        if (cache != null) {
+            var cachedValue = cache.get(id);
+            if (cachedValue != null) {
+                LOGGER.info("Fetching game with id = {} from cache", id);
+                return (GameDto) cachedValue.get();
+            }
         }
         LOGGER.info("Fetching game with id = {} from gRPC service", id);
         GameDto game = gameServiceGrpc.getGameById(id);
@@ -88,4 +112,18 @@ public class GameServiceImpl implements GameService {
             gameCache.clear();
         }
     }
+
+    boolean isRedisAvailable() {
+        try (var connect = redisConnectionFactory.getConnection()) {
+            connect.ping();
+            return true;
+        } catch (RedisConnectionException e) {
+            LOGGER.warn("Redis is unavailable: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            LOGGER.warn("Redis is unavailable: {}", e.getMessage());
+            return false;
+        }
+    }
+
 }
