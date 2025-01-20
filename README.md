@@ -29,3 +29,8 @@
    ```bash
    redis-cli
    KEYS *
+   
+## Dop
+   ```bash
+   sudo lsof -i :8080
+   sudo kill -9 7869
