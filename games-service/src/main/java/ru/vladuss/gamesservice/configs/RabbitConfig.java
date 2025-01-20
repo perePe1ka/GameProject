@@ -6,38 +6,34 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.vladuss.gamesservice.utils.ProtoMessConverter;
 
 @Configuration
 public class RabbitConfig {
-    // Конвертер сообщений JSON
     @Bean
-    public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public MessageConverter protobufMessageConverter() {
+        return new ProtoMessConverter();
     }
 
-    // Конфигурация RabbitListener
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory,
-            MessageConverter jsonMessageConverter
+            MessageConverter protobufMessageConverter
     ) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter);
+        factory.setMessageConverter(protobufMessageConverter);
         return factory;
     }
 
-    // Exchange
     @Bean
     public DirectExchange gameExchange() {
         return new DirectExchange("gamesExchange");
     }
 
-    // CREATE
     @Bean
     public Queue createGameQueue() {
         return new Queue("createGameQueue", true);
@@ -48,7 +44,6 @@ public class RabbitConfig {
         return BindingBuilder.bind(createGameQueue).to(gameExchange).with("game.create.key");
     }
 
-    // UPDATE
     @Bean
     public Queue updateGameQueue() {
         return new Queue("updateGameQueue", true);
@@ -59,7 +54,6 @@ public class RabbitConfig {
         return BindingBuilder.bind(updateGameQueue).to(gameExchange).with("game.update.key");
     }
 
-    // DELETE
     @Bean
     public Queue deleteGameQueue() {
         return new Queue("deleteGameQueue", true);

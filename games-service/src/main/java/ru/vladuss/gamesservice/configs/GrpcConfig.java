@@ -5,7 +5,6 @@ import io.grpc.ServerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.vladuss.gamesservice.services.GameGrpcService;
 import ru.vladuss.gamesservice.services.impl.GameGrpcServiceImpl;
 
 @Configuration

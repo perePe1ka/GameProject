@@ -28,3 +28,7 @@ message GameResponse {
   string genre = 3;
   string platform = 4;
 }
+
+message DeleteGameMessage {
+  string id = 1;
+}

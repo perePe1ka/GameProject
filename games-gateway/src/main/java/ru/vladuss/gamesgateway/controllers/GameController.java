@@ -35,19 +35,19 @@ public class GameController {
     @PostMapping
     public ResponseEntity<String> createGame(@RequestBody GameDto gameDto) {
         gameService.createGame(gameDto);
-        return ResponseEntity.accepted().body("Creating game asynchronously...");
+        return ResponseEntity.accepted().body("Создание записи о игре(асинхрон)...");
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> updateGame(@PathVariable String id, @RequestBody GameDto gameDto) {
-        gameDto.setId(id); // Присваиваем ID из пути
+        gameDto.setId(id);
         gameService.updateGame(gameDto);
-        return ResponseEntity.accepted().body("Updating game asynchronously...");
+        return ResponseEntity.accepted().body("Изменение записи о игре(асинхрон)...");
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteGame(@PathVariable String id) {
         gameService.deleteGame(id);
-        return ResponseEntity.accepted().body("Deleting game asynchronously...");
+        return ResponseEntity.accepted().body("Удаление записи о игре(асинхрон)...");
     }
 }

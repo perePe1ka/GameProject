@@ -1,6 +1,9 @@
 package ru.vladuss.gamesgateway.dtos;
 
-public class GameDto {
+import java.io.Serializable;
+
+public class GameDto implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String id;
     private String name;

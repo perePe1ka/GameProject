@@ -1,5 +1,7 @@
 package ru.vladuss.gamesservice.services.impl;
 
+import com.example.gameproto.GameResponse;
+import com.example.gameproto.DeleteGameMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
@@ -18,36 +20,36 @@ public class MQListener {
     }
 
     @RabbitListener(queues = "createGameQueue")
-    private void createGame(GameDto gameDto) {
+    private void createGame(GameResponse response) {
         Game game = new Game(
                 null,
-                gameDto.getName(),
-                gameDto.getGenre(),
-                gameDto.getPlatform()
+                response.getName(),
+                response.getGenre(),
+                response.getPlatform()
         );
         gameService.createGame(game);
     }
 
     @RabbitListener(queues = "updateGameQueue")
-    public void updateGame(GameDto gameDto){
+    public void updateGame(GameResponse response){
 
-        if (gameDto.getId() == null || gameDto.getId().isEmpty()) {
-            throw new IllegalArgumentException("Game ID cannot be null or empty");
+        if (response.getId() == null || response.getId().isEmpty()) {
+            throw new IllegalArgumentException("Айди игры не может быть нулевым или пустым.");
         }
 
         Game game = new Game(
-                gameDto.getId(),
-                gameDto.getName(),
-                gameDto.getGenre(),
-                gameDto.getPlatform()
+                response.getId(),
+                response.getName(),
+                response.getGenre(),
+                response.getPlatform()
         );
         gameService.updateGame(game);
     }
 
     @RabbitListener(queues = "deleteGameQueue")
-    public void deleteGame(String id) {
-        if (id != null && !id.isEmpty()) {
-            gameService.deleteGame(id);
+    public void deleteGame(DeleteGameMessage deleteGameMessage) {
+        if (deleteGameMessage != null) {
+            gameService.deleteGame(deleteGameMessage.getId());
         }
     }
 

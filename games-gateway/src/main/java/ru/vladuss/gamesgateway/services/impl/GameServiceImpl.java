@@ -10,6 +10,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 import ru.vladuss.gamesgateway.dtos.GameDto;
 import ru.vladuss.gamesgateway.services.GameService;
+import ru.vladuss.gamesgateway.utils.GameMapper;
+import ru.vladuss.gamesgateway.utils.GameProducerImpl;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public List<GameDto> getAll() {
         if (!isRedisAvailable()) {
-            LOGGER.warn("Redis is not available. Fetching all games directly from gRPC.");
+            LOGGER.warn("Redis недоступен, берём из базы");
             return gameServiceGrpc.getAll();
         }
 
@@ -45,11 +47,11 @@ public class GameServiceImpl implements GameService {
         if (cache != null) {
             var cachedValue = cache.get("all");
             if (cachedValue != null) {
-                LOGGER.info("Fetching all games from cache");
+                LOGGER.info("Берём данные из кэша");
                 return (List<GameDto>) cachedValue.get();
             }
         }
-        LOGGER.info("Fetching all games from gRPC service");
+        LOGGER.info("Берём данные из базы");
         List<GameDto> games = gameServiceGrpc.getAll();
         if (cache != null) {
             cache.put("all", games);
@@ -60,7 +62,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public GameDto getById(String id) {
         if (!isRedisAvailable()) {
-            LOGGER.warn("Redis is not available. Fetching game with id = {} directly from gRPC.", id);
+            LOGGER.warn("Redis недоступен. Берём данные с айди = {} по грпс из бд.", id);
             return gameServiceGrpc.getGameById(id);
         }
 
@@ -68,11 +70,11 @@ public class GameServiceImpl implements GameService {
         if (cache != null) {
             var cachedValue = cache.get(id);
             if (cachedValue != null) {
-                LOGGER.info("Fetching game with id = {} from cache", id);
+                LOGGER.info("Берём данные с айди = {} из кэша", id);
                 return (GameDto) cachedValue.get();
             }
         }
-        LOGGER.info("Fetching game with id = {} from gRPC service", id);
+        LOGGER.info("Берём данные с айди = {} по грпс", id);
         GameDto game = gameServiceGrpc.getGameById(id);
         if (cache != null) {
             cache.put(id, game);
@@ -82,27 +84,27 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void createGame(GameDto gameDto) {
-        LOGGER.info("Sending create game request for game with id = {}", gameDto.getId());
-        gameProducer.sendGameCreated(gameDto);
+        LOGGER.info("Отрпавили запрос на создание с айди = {}", gameDto.getId());
+        gameProducer.sendGameCreated(GameMapper.toGameResponse(gameDto));
         clearCaches();
     }
 
     @Override
     public void updateGame(GameDto gameDto) {
-        LOGGER.info("Sending update game request for game with id = {}", gameDto.getId());
-        gameProducer.sendGameUpdated(gameDto);
+        LOGGER.info("Отрпавили запрос на изменение с айди = {}", gameDto.getId());
+        gameProducer.sendGameUpdated(GameMapper.toGameResponse(gameDto));
         clearCaches();
     }
 
     @Override
     public void deleteGame(String id) {
-        LOGGER.info("Sending delete game request for game with id = {}", id);
+        LOGGER.info("Отрпавили запрос на удаление с айди = {}", id);
         gameProducer.sendGameDelete(id);
         clearCaches();
     }
 
     private void clearCaches() {
-        LOGGER.info("Clearing all caches");
+        LOGGER.info("Кэш почищен");
         var gamesCache = cacheManager.getCache("gamesCache");
         if (gamesCache != null) {
             gamesCache.clear();
@@ -118,10 +120,10 @@ public class GameServiceImpl implements GameService {
             connect.ping();
             return true;
         } catch (RedisConnectionException e) {
-            LOGGER.warn("Redis is unavailable: {}", e.getMessage());
+            LOGGER.warn("Redis упал: {}", e.getMessage());
             return false;
         } catch (Exception e) {
-            LOGGER.warn("Redis is unavailable: {}", e.getMessage());
+            LOGGER.warn("Redis упал: {}", e.getMessage());
             return false;
         }
     }

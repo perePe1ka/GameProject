@@ -8,13 +8,13 @@ grpc:
 spring:
   data:
     mongodb:
-      host: mongo # Имя сервиса MongoDB в docker-compose.yml
+      host: mongo
       port: 27017
       username: root
       password: example
       authentication-database: admin
   rabbitmq:
-    host: rabbitmq # Имя RabbitMQ в docker-compose.yml
+    host: rabbitmq
     port: 5672
     username: guest
     password: guest
